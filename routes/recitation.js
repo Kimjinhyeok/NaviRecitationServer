@@ -1,7 +1,10 @@
 var router = require('express').Router();
+var pgClient = require('../utils/pgClient');
 
-router.get('/:category', (req, res) => {
+router.get('/:category', async (req, res) => {
   try {
+    var row = await pgClient.query('SELECT * FROM nav_words');
+    
     const { category } = req.params;
   } catch (error) {
     res.status(error.code).send(error.message)
