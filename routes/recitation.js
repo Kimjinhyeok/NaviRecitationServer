@@ -3,9 +3,15 @@ var pgClient = require('../utils/pgClient');
 
 router.get('/:category', async (req, res) => {
   try {
-    var row = await pgClient.query('SELECT * FROM nav_words');
+    var category = Number(req.params.category);
     
-    const { category } = req.params;
+    var query = `SELECT B.bible_name, A.* FROM nav_words A 
+    RIGHT OUTER JOIN bible_code B on A.bible_code = B.bible_code 
+    ${category ? (category % 100 === 0 ? `WHERE series_code > ${category} AND series_code <= ${category + 99} ` : "WHERE series_code = " + category)  : ""}`;
+    
+    var row = await pgClient.query(query);
+    var result = row.rows;
+    res.status(200).send(result);
   } catch (error) {
     res.status(error.code).send(error.message)
   }
