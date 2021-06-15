@@ -21,10 +21,8 @@ router.get('/:category', async (req, res) => {
   try {
     var category = Number(req.params.category);
     
-    var query = `SELECT B.bible_name, A.* FROM nav_words A 
-    RIGHT OUTER JOIN bible_code B on A.bible_code = B.bible_code 
-    ${category ? (category % 100 === 0 ? `WHERE series_code > ${category} AND series_code <= ${category + 99} ` : "WHERE series_code = " + category)  : ""}`;
-    
+    var query = category != 500 ? getNaviSeriesCardQuery(category) : getOYOCardQuery();
+
     var row = await pgClient.query(query);
     var result = row.rows;
     res.status(200).send(result);
@@ -32,6 +30,15 @@ router.get('/:category', async (req, res) => {
     res.status(error.code).send(error.message);
   }
 });
+function getNaviSeriesCardQuery(category) {
+  return `SELECT B.bible_name, A.* FROM nav_words A 
+    JOIN bible_code B on A.bible_code = B.bible_code 
+    ${category ? (category % 100 === 0 ? `WHERE series_code > ${category} AND series_code <= ${category + 99} ` : "WHERE series_code = " + category)  : ""}`;
+}
+function getOYOCardQuery() {
+  return `SELECT B.bible_name, A.*, A.content as verse_gae FROM oyo A 
+  JOIN bible_code B on A.bible_code = B.bible_code`
+}
 function getColumnNames(params) {
   var columns = [];
   var values = [];
