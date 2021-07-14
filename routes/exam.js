@@ -18,11 +18,14 @@ router.get('/guest', async (req ,res) => {
 
 router.get('/mem', async (req, res) => {
   try {
-    let include242 = req.params.include242;
-    let participation = req.params.participation;
-    let version = req.params.version
+    let include242 = req.query.include242;
+    let participation = req.query.participation;
+    let version = req.query.version
 
     let query = makeQueryByCountForMember(participation, include242, version, 545);
+    var result = await pgClient.query(query);
+    var cardList = result.rows;
+    res.status(200).send(cardList)
   } catch (error) {
     res.status(400).send(error);
   }
