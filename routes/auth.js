@@ -29,7 +29,10 @@ router.post('/', async (req, res) => {
         }, privateKey, {
           expiresIn : "7"
         });
-        res.status(200).send(token);
+        res.cookie('authtoken', token, {
+          expires : new Date(Date.now() + (1000 * 60 * 60 * 24 * 30))
+        })
+        res.status(200).send(user.name);
       })
     })(req, res);
   } catch (error) {
@@ -52,4 +55,4 @@ function returnErrorMessage(code, message) {
     message
   )
 }
-module.exports = routerd;
+module.exports = router;
