@@ -14,7 +14,7 @@ const passportVerify = async (userId, password, done) => {
 
     var queryRes = await pgClient.query(`SELECT * FROM users WHERE id = '${userId}'`);
     if (queryRes.rowCount <= 0) {
-      done(null, false, { message: "존재하지 않는 사용자 입니다." });
+      done(null, false, { message: "ID 또는 비밀번호가 일치하지 않습니다." });
       return;
     }
 
