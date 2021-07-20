@@ -1,0 +1,3 @@
+[submodule "public/app"]
+	path = public/app
+	url = https://github.com/Kimjinhyeok/NaviMemories
