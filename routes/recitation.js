@@ -1,44 +1,51 @@
 var router = require('express').Router();
+const passport = require('passport');
 var pgClient = require('../utils/pgClient');
 
 router.get('/oyo/content', async (req, res) => {
   try {
-    var { bible_code, chapter, f_verse, l_verse }=  req.query;
+    var { bible_code, chapter, f_verse, l_verse } = req.query;
 
     var query = `SELECT ARRAY_TO_STRING(array_agg(content), ' ') as content
       FROM bible_kornkrv WHERE bible_code=${bible_code} 
-      AND chapter=${chapter} AND verse ${l_verse ? "BETWEEN " + f_verse  + " AND " + l_verse : "= " + f_verse}`;
-    
+      AND chapter=${chapter} AND verse ${l_verse ? "BETWEEN " + f_verse + " AND " + l_verse : "= " + f_verse}`;
+
     var pgResult = await pgClient.query(query);
-    var {content} = pgResult.rows[0];
-    
+    var { content } = pgResult.rows[0];
+
     res.status(200).end(content);
   } catch (error) {
     res.status(500).send(error);
   }
 })
-router.get('/:category', async (req, res) => {
+router.get('/:category', (req, res) => {
   try {
-    var category = Number(req.params.category);
-    var version = req.query.version;
+    passport.authenticate('custom', async (error, user) => {
+      if (error) {
+        throw error;
+      } 
+      var category = Number(req.params.category);
+      var version = req.query.version;
 
-    var query = category != 500 ? getNaviSeriesCardQuery(category, version) : getOYOCardQuery();
+      var query = category != 500 ? getNaviSeriesCardQuery(category, version) : getOYOCardQuery(user);
 
-    var row = await pgClient.query(query);
-    var result = row.rows;
-    res.status(200).send(result);
+      var row = await pgClient.query(query);
+      var result = row.rows;
+      res.status(200).send(result);
+    })(req, res);
   } catch (error) {
-    res.status(error.code).send(error.message);
+    res.status(error.code || 400).send(error.message);
   }
 });
-function getNaviSeriesCardQuery(category) {
-  return `select card_num, category, theme, bible_code, chapter, f_verse, l_verse, verse_gae, verse_kor 
-  FROM nav_words
-  ${category ? (category % 100 === 0 ? `WHERE series_code > ${category} AND series_code <= ${category + 99} ` : "WHERE series_code = " + category)  : ""}`;
+function getNaviSeriesCardQuery(category, version) {
+  return `select (ROW_NUMBER() OVER()) AS id, B.bible_name, A.card_num, A.category, A.theme, A.chapter, A.f_verse, A.l_verse, A.verse_gae, A.verse_kor   
+  FROM nav_words as A RIGHT OUTER JOIN bible_code B on A.bible_code = B.bible_code 
+  ${category ? (category % 100 === 0 ? `WHERE series_code > ${category} AND series_code <= ${category + 99} ` : "WHERE series_code = " + category) : ""}`;
 }
-function getOYOCardQuery() {
+function getOYOCardQuery(userInfo) {
+  const { i : objId} = userInfo;
   return `SELECT B.bible_name, A.*, A.content as verse_gae FROM oyo A 
-  JOIN bible_code B on A.bible_code = B.bible_code`
+  RIGHT OUTER JOIN bible_code B on A.bible_code = B.bible_code WHERE owner = '${objId}'`
 }
 function getColumnNames(params) {
   var columns = [];
@@ -49,31 +56,30 @@ function getColumnNames(params) {
       values.push(`\'${params[key]}\'`);
     }
   }
-  
-  return {columns : columns.toString(), values : values.toString()};
+  columns.push("\"id\"")
+  values.push("uuid_generate_v4()")
+
+  return { columns: columns.toString(), values: values.toString() };
 }
-router.post('/oyo', async (req, res) => {
-  try {
-    var {columns, values} = getColumnNames(req.body);
-
-
-    /**
-     *  TODO
-     *  사용자 정보 MOCK 임시 데이터 적용 중
-     */
-
-    columns += ',\"owner\"';
-    values += ',\'545\'';
-
-    var query = `INSERT INTO OYO(${columns}) VALUES(${values})`;
-    var pgResult = await pgClient.query(query);
-    var rowResult = pgResult.rows[0];
-
-    res.status(200).send(rowResult);
-
-  } catch (error) {
-    res.status(error.code).send(error.message)
-  }
+router.post('/oyo', (req, res) => {
+  passport.authenticate('custom', async (err, user) => {
+    try {
+      const {i : objId} = user;
+      var { columns, values } = getColumnNames(req.body);
+  
+      columns += ',\"owner\"';
+      values += `,\'${objId}\'`;
+  
+      var query = `INSERT INTO OYO(${columns}) VALUES(${values})`;
+      var pgResult = await pgClient.query(query);
+      var rowResult = pgResult.rows[0];
+  
+      res.status(200).send(rowResult);
+  
+    } catch (error) {
+      res.status(error.code).send(error.message)
+    }
+  })(req,res);
 });
 router.put('/', (req, res) => {
   try {
