@@ -82,6 +82,51 @@ router.post('/oyo', (req, res) => {
   })(req,res);
 });
 
+router.put('/oyo/:oyoId', (req, res) => {
+  passport.authenticate('custom', async (err, user) => {
+    try {
+      if(err) {
+        throw {
+          code : 401,
+          message : "접근 권한이 없습니다. 로그인을 해주세요."
+        }
+      }
+
+      var { oyoId } = req.params;
+      var { i : objId } = user;
+      var body = req.body;
+      var value = {
+        theme : body.theme,
+        bible_code : body.bible_code,
+        chapter : body.chapter,
+        f_verse : body.f_verse,
+        l_verse : body.l_verse,
+        content : body.content,
+      }
+      const query = `UPDATE oyo SET 
+        theme = '${value.theme}', bible_code = '${value.bible_code}',
+        chapter = '${value.chapter}', f_verse = '${value.f_verse}',
+        l_verse = '${value.l_verse}', content = '${value.content}' 
+        WHERE id = '${oyoId}' AND owner = '${objId}'`;
+      
+      var result = await pgClient.query(query);
+      if(result.rowCount <= 0) {
+        throw {
+          code : 400,
+          message : "일치하는 OYO 카드를 찾을 수 없습니다. 다시 시도해주세요."
+        }
+      }
+      res.status(200).send({
+        id : oyoId,
+        ...value
+      });
+
+    } catch (error) {
+      var { code, message } = error;
+      res.status(code || 500).send({message: message || "OYO 카드 수정 중 장애가 발생했습니다."})
+    }
+  })(req, res);
+})
 router.delete('/oyo/:oyoId', (req, res) => {
   passport.authenticate('custom', async (err, user) => {
     try {
