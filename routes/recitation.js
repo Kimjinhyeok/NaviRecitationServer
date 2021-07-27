@@ -81,6 +81,36 @@ router.post('/oyo', (req, res) => {
     }
   })(req,res);
 });
+
+router.delete('/oyo/:oyoId', (req, res) => {
+  passport.authenticate('custom', async (err, user) => {
+    try {
+      if(err) {
+        throw {
+          code : 401,
+          message : ""
+        }
+      }
+      const { oyoId } = req.params;
+      const { i : objId } = user;
+      const query = `DELETE FROM oyo WHERE id = '${oyoId}' AND owner = '${objId}'`;
+  
+      var result = await pgClient.query(query);
+      var delCount = result.rowCount;
+      if(delCount <= 0) {
+        throw {
+          code : 400,
+          message : "OYO 카드 정보를 찾을 수 없습니다."
+        }
+      }
+      res.status(200).send();
+      
+    } catch (error) {
+      var { code, message } = error;
+      res.status(code || 400).send({message : message || "OYO 카드 제거 도중 서버 장애가 발생했습니다."});
+    }
+  })(req, res);
+})
 router.put('/', (req, res) => {
   try {
     const { memorized, cardnum, category } = req.body;
