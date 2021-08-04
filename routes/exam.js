@@ -16,7 +16,7 @@ router.get('/guest', async (req ,res) => {
   }
 });
 
-router.get('/mem', async (req, res) => {
+router.get('/mem', async (req, res, next) => {
   try {
     let include242 = req.query.include242;
     let participation = req.query.participation;

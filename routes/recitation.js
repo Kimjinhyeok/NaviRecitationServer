@@ -2,7 +2,7 @@ var router = require('express').Router();
 const passport = require('passport');
 var pgClient = require('../utils/pgClient');
 
-router.get('/oyo/content', async (req, res) => {
+router.get('/oyo/content', async (req, res, next) => {
   try {
     var { bible_code, chapter, f_verse, l_verse } = req.query;
 
@@ -19,7 +19,7 @@ router.get('/oyo/content', async (req, res) => {
     res.status(500).send(error);
   }
 })
-router.get('/:category', (req, res) => {
+router.get('/:category', (req, res, next) => {
   try {
     passport.authenticate('custom', async (error, user) => {
       if (error) {
@@ -33,7 +33,7 @@ router.get('/:category', (req, res) => {
       var row = await pgClient.query(query);
       var result = row.rows;
       res.status(200).send(result);
-    })(req, res);
+    })(req, res, next);
   } catch (error) {
     console.error(error);
     res.status(error.code || 400).send(error.message);
@@ -63,7 +63,7 @@ function getColumnNames(params) {
 
   return { columns: columns.toString(), values: values.toString() };
 }
-router.post('/oyo', (req, res) => {
+router.post('/oyo', (req, res, next) => {
   passport.authenticate('custom', async (err, user) => {
     try {
       const {i : objId} = user;
@@ -85,7 +85,7 @@ router.post('/oyo', (req, res) => {
   })(req,res);
 });
 
-router.put('/oyo/:oyoId', (req, res) => {
+router.put('/oyo/:oyoId', (req, res, next) => {
   passport.authenticate('custom', async (err, user) => {
     try {
       if(err) {
@@ -128,9 +128,9 @@ router.put('/oyo/:oyoId', (req, res) => {
       var { code, message } = error;
       res.status(code || 500).send({message: message || "OYO 카드 수정 중 장애가 발생했습니다."})
     }
-  })(req, res);
+  })(req, res, next);
 })
-router.delete('/oyo/:oyoId', (req, res) => {
+router.delete('/oyo/:oyoId', (req, res, next) => {
   passport.authenticate('custom', async (err, user) => {
     try {
       if(err) {
@@ -158,9 +158,9 @@ router.delete('/oyo/:oyoId', (req, res) => {
       var { code, message } = error;
       res.status(code || 400).send({message : message || "OYO 카드 제거 도중 서버 장애가 발생했습니다."});
     }
-  })(req, res);
+  })(req, res, next);
 })
-router.put('/', (req, res) => {
+router.put('/', (req, res, next) => {
   try {
     const { memorized, cardnum, category } = req.body;
   } catch (error) {

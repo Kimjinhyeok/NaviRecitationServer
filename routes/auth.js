@@ -4,14 +4,14 @@ const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const {privateKey} = require('../src/secretPrivateKey');
 
-router.post('/password', (req, res) => {
+router.post('/password', (req, res, next) => {
   try {
     
   } catch (error) {
     res.status(error.code).send(error.message)
   }
 });
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
   try {
     passport.authenticate('local', async (error, user, info) => {
       if(error || !user) {
@@ -34,13 +34,13 @@ router.post('/', async (req, res) => {
         })
         res.status(200).send(user.name);
       })
-    })(req, res);
+    })(req, res, next);
   } catch (error) {
     console.error(error);
     res.status(error.code).send(error.message)
   }
 })
-router.delete('/', (req, res) => {
+router.delete('/', (req, res, next) => {
   try {
     
   } catch (error) {

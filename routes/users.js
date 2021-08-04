@@ -9,7 +9,7 @@ router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
 
-router.post('/signup', async function(req, res) {
+router.post('/signup', async function(req, res, next) {
   try {
     
     const { pwd, id, name, email, mobile } = req.body;

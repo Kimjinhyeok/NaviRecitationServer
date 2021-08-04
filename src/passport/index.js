@@ -1,9 +1,10 @@
 const passport = require('passport');
 const { Strategy: LocalStrategy } = require('passport-local');
-const { ExtractJwt, Strategy: JWTStrategy } = require('passport-jwt');
+const { Strategy : CustomStrategy } = require('passport-custom');
 const pgClient = require('../../utils/pgClient');
 const crypto = require('crypto');
 const { privateKey } = require('../secretPrivateKey');
+const jwt = require('jsonwebtoken');
 
 const passportConfig = {
   usernameField : 'id',
@@ -35,18 +36,15 @@ const passportVerify = async (userId, password, done) => {
   }
 }
 
-const JWTConfig = {
-  jwtFromRequest: ExtractJwt.fromHeader('authToken'),
-  secretOrKey: privateKey,
-};
-const JWTVerify = async (jwtPayload, done) => {
+const CustomVerify = async (req, done) => {
   try {
-    const existUser = (await pgClient.query(`SELECT COUNT(id) FROM users WHERE obj_id = ${jwtPayload.i}`)).rows[0] > 0;
-    if(existUser) {
-      done(null, jwtPayload.i);
+    var {authtoken} = req.cookies;
+    if(!authtoken) {
+      done(null, false, {message : "로그인이 필요한 기능입니다."});
       return;
     }
-    done(null, false, {message : "올바르지 않은 인증정보 입니다."});
+    var decoded = jwt.decode(authtoken);
+    done(null, decoded);
   } catch (error) {
     console.error(error);
     done(error);
@@ -66,5 +64,5 @@ function decodePassword(inputPassword, userSalt) {
 
 module.exports = () => {
   passport.use('local', new LocalStrategy(passportConfig, passportVerify));
-  passport.use('jwt', new JWTStrategy(JWTConfig, JWTVerify))
+  passport.use('custom', new CustomStrategy(CustomVerify))
 }
