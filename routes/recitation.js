@@ -15,6 +15,7 @@ router.get('/oyo/content', async (req, res) => {
 
     res.status(200).end(content);
   } catch (error) {
+    console.error(error);
     res.status(500).send(error);
   }
 })
@@ -34,6 +35,7 @@ router.get('/:category', (req, res) => {
       res.status(200).send(result);
     })(req, res);
   } catch (error) {
+    console.error(error);
     res.status(error.code || 400).send(error.message);
   }
 });
@@ -77,6 +79,7 @@ router.post('/oyo', (req, res) => {
       res.status(200).send(rowResult);
   
     } catch (error) {
+      console.error(error);
       res.status(error.code).send(error.message)
     }
   })(req,res);
@@ -151,6 +154,7 @@ router.delete('/oyo/:oyoId', (req, res) => {
       res.status(200).send();
       
     } catch (error) {
+      console.error(error);
       var { code, message } = error;
       res.status(code || 400).send({message : message || "OYO 카드 제거 도중 서버 장애가 발생했습니다."});
     }
@@ -160,6 +164,7 @@ router.put('/', (req, res) => {
   try {
     const { memorized, cardnum, category } = req.body;
   } catch (error) {
+    console.error(error);
     res.status(error.code).send(error.message)
   }
 })

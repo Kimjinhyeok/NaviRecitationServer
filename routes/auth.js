@@ -36,6 +36,7 @@ router.post('/', async (req, res) => {
       })
     })(req, res);
   } catch (error) {
+    console.error(error);
     res.status(error.code).send(error.message)
   }
 })
