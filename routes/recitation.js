@@ -40,9 +40,10 @@ router.get('/:category', (req, res, next) => {
   }
 });
 function getNaviSeriesCardQuery(category, version) {
-  return `select (ROW_NUMBER() OVER()) AS id, B.bible_name, A.bible_code, A.card_num, A.category, A.theme, A.chapter, A.f_verse, A.l_verse, A.verse_gae, A.verse_kor   
+  return `select (ROW_NUMBER() OVER()) AS id, B.bible_name, A.bible_code, A.card_num, A.series_code, A.category, A.theme, A.chapter, A.f_verse, A.l_verse, A.verse_gae, A.verse_kor   
   FROM nav_words as A RIGHT OUTER JOIN bible_code B on A.bible_code = B.bible_code 
-  ${category ? (category % 100 === 0 ? `WHERE series_code > ${category} AND series_code <= ${category + 99} ` : "WHERE series_code = " + category) : ""}`;
+  ${category ? (category % 100 === 0 ? `WHERE series_code > ${category} AND series_code <= ${category + 99} ` : "WHERE series_code = " + category) : ""}
+  ORDER BY A.series_code ASC, A.card_num ASC`;
 }
 function getOYOCardQuery(userInfo) {
   const { i : objId} = userInfo;
