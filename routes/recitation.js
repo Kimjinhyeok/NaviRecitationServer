@@ -161,6 +161,49 @@ router.delete('/oyo/:oyoId', (req, res, next) => {
     }
   })(req, res, next);
 })
+
+router.put('/passed/:category/:cardId', (req, res) => {
+  passport.authenticate('custom', async (error, user) => {
+    try {
+      let { category : series_code, cardId : card_num } = req.params;
+      let { recitation_status } = req.body;
+      let query = "";
+      
+      if(!user) {
+        // 로그인 안되어 있음
+        throw {
+          code : 401,
+          message : "로그인이 필요한 기능입니다."
+        }
+      }
+      series_code = Number(series_code);
+      let { i : obj_id } = user;
+      if(series_code >= 500) {
+        // OYO 카드
+        query = `UPDATE oyo SET passed = ${recitation_status} WHERE owner = '${obj_id}' AND id = '${card_num}'`
+      } else {
+        // 기본 암송카드
+        query = `INSERT INTO nav_words_passed(user_obj_id, series_code, card_num, passed) VALUES('${obj_id}', '${series_code}', '${card_num}', ${recitation_status})
+        ON CONFLICT (user_obj_id, series_code, card_num)
+        DO UPDATE SET passed = ${recitation_status}`;
+      }
+
+      try {
+        
+        var rows = await pgClient.query(query);
+      } catch (error) {
+        console.error(error);
+        let err = new Error("데이터 처리 중 장애가 발생했습니다.");
+        err.code = 500;
+        throw err;
+      }
+      // var queryRes = rows.rows[0];
+      res.status(200).send(true);
+    } catch (error) {
+      res.status(error.code || 500).send({message : error.message || "암송 여부 처리 중 장애가 발생했습니다."});
+    }
+  })(req, res);
+})
 router.put('/', (req, res, next) => {
   try {
     const { memorized, cardnum, category } = req.body;
