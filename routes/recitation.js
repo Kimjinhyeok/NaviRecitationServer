@@ -48,7 +48,8 @@ function getNaviSeriesCardQuery(category, version) {
 function getOYOCardQuery(userInfo) {
   const { i : objId} = userInfo;
   return `SELECT B.bible_name, A.*, A.content as verse_gae FROM oyo A 
-  RIGHT OUTER JOIN bible_code B on A.bible_code = B.bible_code WHERE owner = '${objId}'`
+  RIGHT OUTER JOIN bible_code B on A.bible_code = B.bible_code WHERE owner = '${objId}'
+  ORDER BY create_at ASC`
 }
 function getColumnNames(params) {
   var columns = [];
