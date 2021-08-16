@@ -53,14 +53,17 @@ function getNaviSeriesCardQuery(category, userId) {
   return query;
 }
 function getGuestNaviSeriesQuery(category) {
-  return `select (ROW_NUMBER() OVER()) AS id, B.bible_name, A.bible_code, A.card_num, A.series_code, A.category, A.theme, A.chapter, A.f_verse, A.l_verse, A.verse_gae, A.verse_kor   
-  FROM nav_words as A RIGHT OUTER JOIN bible_code B on A.bible_code = B.bible_code 
-  ${category ? (category % 100 === 0 ? `WHERE series_code > ${category} AND series_code <= ${category + 99} ` : "WHERE series_code = " + category) : ""}
-  ORDER BY A.series_code ASC, A.card_num ASC`;
+  return `SELECT (ROW_NUMBER() OVER()) AS id, B.bible_name, A.bible_code, A.card_num, A.series_code, A.category, A.theme, A.chapter, A.f_verse, A.l_verse, A.verse_gae, A.verse_kor   
+  FROM (
+    SELECT * 
+    FROM nav_words 
+    ${category ? (category % 100 === 0 ? `WHERE series_code > ${category} AND series_code <= ${category + 99} ` : "WHERE series_code = " + category) : ""}
+  ORDER BY series_code ASC, card_num ASC) as A 
+  LEFT OUTER JOIN bible_code B on A.bible_code = B.bible_code`;
 }
 function getOYOCardQuery(userInfo) {
   const { i: objId } = userInfo;
-  return `SELECT B.bible_name, A.bible_code, A.chapter, A.theme, A.f_verse, A.l_verse, A.content, A.content as verse_gae, A.id as card_num FROM oyo A 
+  return `SELECT B.bible_name, A.bible_code, A.chapter, A.theme, A.f_verse, A.l_verse, A.content, A.content as verse_gae, A.id as card_num, A.passed, A.create_at FROM oyo A 
   RIGHT OUTER JOIN bible_code B on A.bible_code = B.bible_code WHERE owner = '${objId}'
   ORDER BY create_at ASC`
 }
