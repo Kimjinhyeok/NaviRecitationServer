@@ -87,10 +87,21 @@ router.post('/oyo', (req, res, next) => {
     try {
       const { i: objId } = user;
       var { columns, values } = getColumnNames(req.body);
-
+      const { bible_code, chapter, f_verse, l_verse } = req.body;
       columns += ',\"owner\"';
       values += `,\'${objId}\'`;
 
+      const checkQuery = `
+        SELECT COUNT(*) 
+        FROM OYO 
+        WHERE bible_code = '${bible_code}' AND chapter = '${chapter}' AND f_verse = '${f_verse}'${l_verse ? " AND l_verse = " + Number(l_verse) : ""} AND owner = '${objId}'`;
+      var checkRes = await pgClient.query(checkQuery);
+      if(checkRes.rows[0].count >= 1) {
+        throw {
+          code : 409,
+          message : "이미 등록된 OYO 구절 입니다."
+        }
+      }
       var query = `INSERT INTO OYO(${columns}) VALUES(${values})`;
       var pgResult = await pgClient.query(query);
       var rowResult = pgResult.rows[0];
