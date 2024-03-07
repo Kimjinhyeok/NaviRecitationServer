@@ -137,9 +137,9 @@ router.put('/oyo/:oyoId', (req, res, next) => {
         content: body.content,
       }
       const query = `UPDATE oyo SET 
-        theme = '${value.theme}', bible_code = '${value.bible_code}',
+        ${value.theme !== undefined ? ("theme = '" + value.theme + "',") : ""} bible_code = '${value.bible_code}',
         chapter = '${value.chapter}', f_verse = '${value.f_verse}',
-        l_verse = '${value.l_verse}', content = '${value.content}' 
+        ${value.l_verse !== undefined ? ("l_verse = '" + value.l_verse + "'," ) : ""} content = '${value.content}' 
         WHERE id = '${oyoId}' AND owner = '${objId}'`;
 
       var result = await pgClient.query(query);
