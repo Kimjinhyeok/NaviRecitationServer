@@ -4,6 +4,8 @@ const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const {privateKey} = require('../src/secretPrivateKey');
 
+const AuthUsecase = require('../src/usecase/auth');
+
 router.post('/password', (req, res, next) => {
   try {
     
@@ -47,7 +49,20 @@ router.delete('/', (req, res, next) => {
     res.status(error.code).send(error.message)
   }
 })
+router.post('/checkPwd', (req, res, next) => {
+  try {
 
+    AuthUsecase.comparePassword(req, res, next)
+    .then(res2 => {
+      res.status(200).send(res2);
+    })
+    .catch(error => {
+      res.status(error.code).send(error);
+    })
+  } catch (error) {
+    res.status(error.code).send({message : error.message});
+  }
+})
 
 
 function returnErrorMessage(code, message) {
