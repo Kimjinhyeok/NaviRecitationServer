@@ -4,6 +4,8 @@ const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const {privateKey} = require('../src/secretPrivateKey');
 
+const AuthUsecase = require('../src/usecase/auth');
+
 router.post('/password', (req, res, next) => {
   try {
     
@@ -47,9 +49,30 @@ router.delete('/', (req, res, next) => {
     res.status(error.code).send(error.message)
   }
 })
+router.post('/checkPwd', async function (req, res, next) {
+  try {
 
+    const result = await AuthUsecase.comparePassword(req, res, next);
+    
+    res.status(200).send(result);
+    
+  } catch (error) {
+    res.status(error.code || 400).send({message : error.message});
+    console.debug(error);
+  }
+})
 
+router.post('/reset', async function(req, res, next) {
+  try {
+    
+    const result = await AuthUsecase.changePassword(req, res, next);
 
+    res.status(200).send(result);
+  } catch (error) {
+    res.status(error.code || 400).send({message : error.message || "비밀번호 변경 도중 장애가 발생했습니다."});
+    console.debug(error);
+  }
+})
 function returnErrorMessage(code, message) {
   return (
     code,
