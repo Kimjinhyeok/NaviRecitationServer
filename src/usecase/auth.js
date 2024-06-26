@@ -1,7 +1,8 @@
 
 const pgClient = require('../../utils/pgClient');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto')
+const crypto = require('crypto');
+const { createSalt, createHashPwd } = require('../../utils/encode');
 
 const comparePassword = async (req, res, next) => {
 
@@ -20,7 +21,7 @@ const comparePassword = async (req, res, next) => {
   const userId = decoded.i;
 
   if(!userId) {
-    return new Error("올바른 접근의 사용자가 아닙니다.");
+    throw new Error("올바른 접근의 사용자가 아닙니다.");
   }
   
   const queryRes = await pgClient.query(`SELECT * FROM users WHERE obj_id = '${userId}'`);
@@ -41,9 +42,57 @@ const comparePassword = async (req, res, next) => {
     })
   })
   
+  if(result instanceof Error) {
+    throw result;
+  }
   return result == user.password;
 }
 
+const changePassword = async (req, res, next) => {
+  const {
+    password, passwordRepeat
+  } = req.body;
+  const { cookies } = req;
+  const {authtoken = ''} = cookies;
+
+  if(!password || !passwordRepeat) {
+    throw new Error("비밀번호가 정확하지 않습니다.");
+  }
+
+  if(!cookies || !authtoken) {
+    throw new Error("로그인 정보를 찾을 수 없습니다.");
+  } else if(!password) {
+    throw new Error("비밀번호를 입력해주세요.");
+  }
+
+  const decoded = jwt.decode(authtoken);
+
+  const userId = decoded.i;
+
+  if(!userId) {
+    throw new Error("올바른 접근의 사용자가 아닙니다.");
+  }
+  
+  try {
+    
+    const newSalt = await createSalt();
+    const encodedPassword = await createHashPwd(password, newSalt);
+
+    const result = await pgClient.query(`
+      UPDATE users 
+      SET password = '${encodedPassword}', salt = '${newSalt}'
+      WHERE obj_id = '${userId}'
+    `);
+
+    return result.rowCount > 0;
+    
+  } catch (error) {
+    return error;
+  }
+
+
+}
 module.exports = {
-  comparePassword
+  comparePassword,
+  changePassword,
 }
