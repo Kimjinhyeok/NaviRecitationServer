@@ -49,22 +49,30 @@ router.delete('/', (req, res, next) => {
     res.status(error.code).send(error.message)
   }
 })
-router.post('/checkPwd', (req, res, next) => {
+router.post('/checkPwd', async function (req, res, next) {
   try {
 
-    AuthUsecase.comparePassword(req, res, next)
-    .then(res2 => {
-      res.status(200).send(res2);
-    })
-    .catch(error => {
-      res.status(error.code).send(error);
-    })
+    const result = await AuthUsecase.comparePassword(req, res, next);
+    
+    res.status(200).send(result);
+    
   } catch (error) {
-    res.status(error.code).send({message : error.message});
+    res.status(error.code || 400).send({message : error.message});
+    console.debug(error);
   }
 })
 
+router.post('/reset', async function(req, res, next) {
+  try {
+    
+    const result = await AuthUsecase.changePassword(req, res, next);
 
+    res.status(200).send(result);
+  } catch (error) {
+    res.status(error.code || 400).send({message : error.message || "비밀번호 변경 도중 장애가 발생했습니다."});
+    console.debug(error);
+  }
+})
 function returnErrorMessage(code, message) {
   return (
     code,
