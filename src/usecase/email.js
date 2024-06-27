@@ -24,7 +24,7 @@ const sendChangeEmail = async function(req, res, next) {
   const PwdChangeUrl = `http://${WEB_URL}/reset/password?token=${token}`;
 
   const convertedHtml = html.replace("#URL", PwdChangeUrl);
-  const emailResult = await sendEmail("비밀번호 변경 안내", {html : convertedHtml}, email);
+  const emailResult = await sendEmail("[성경암송] 비밀번호 변경 안내", {html : convertedHtml}, email);
 
   return emailResult
 }
