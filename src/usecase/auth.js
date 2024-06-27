@@ -47,24 +47,15 @@ const comparePassword = async (req, res, next) => {
   }
   return result == user.password;
 }
-
-const changePassword = async (req, res, next) => {
-  const {
-    password, passwordRepeat
-  } = req.body;
+const getLoggedInUserCondition = async (req) => {
+  
   const { cookies } = req;
   const {authtoken = ''} = cookies;
-
-  if(!password || !passwordRepeat) {
-    throw new Error("비밀번호가 정확하지 않습니다.");
-  }
-
+  
   if(!cookies || !authtoken) {
     throw new Error("로그인 정보를 찾을 수 없습니다.");
-  } else if(!password) {
-    throw new Error("비밀번호를 입력해주세요.");
   }
-
+  
   const decoded = jwt.decode(authtoken);
 
   const userId = decoded.i;
@@ -72,8 +63,43 @@ const changePassword = async (req, res, next) => {
   if(!userId) {
     throw new Error("올바른 접근의 사용자가 아닙니다.");
   }
+
+  return `obj_id = '${userId}'`
+}
+const getLostPwdUserCondition = async (req) => {
+  const {
+    token
+  } = req.body;
+
+  try {
+    const decoded = jwt.decode(token);
+  
+    const email = decoded.email;
+  
+    if(!email) {
+      throw new Error("올바른 접근의 사용자가 아닙니다.");
+    }
+
+    return `email = '${email}'`
+  } catch (error) {
+    throw error;
+  }
+}
+const changePassword = async (req, res, next) => {
+  const {
+    password, passwordRepeat, token
+  } = req.body;
+
+  if(!password || !passwordRepeat) {
+    throw new Error("비밀번호가 정확하지 않습니다.");
+  }
+
+  if(!password) {
+    throw new Error("비밀번호를 입력해주세요.");
+  }
   
   try {
+    const condition = await (token ? getLostPwdUserCondition(req) : getLoggedInUserCondition(req));
     
     const newSalt = await createSalt();
     const encodedPassword = await createHashPwd(password, newSalt);
@@ -81,7 +107,7 @@ const changePassword = async (req, res, next) => {
     const result = await pgClient.query(`
       UPDATE users 
       SET password = '${encodedPassword}', salt = '${newSalt}'
-      WHERE obj_id = '${userId}'
+      WHERE ${condition}
     `);
 
     return result.rowCount > 0;
@@ -89,9 +115,8 @@ const changePassword = async (req, res, next) => {
   } catch (error) {
     return error;
   }
-
-
 }
+
 module.exports = {
   comparePassword,
   changePassword,
