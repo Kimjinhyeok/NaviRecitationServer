@@ -18,7 +18,7 @@ const sendEmail = async function(subject, content, target, ...otp) {
       from : process.env.EMAIL_USER,
       to : target,
       subject : subject,
-      text : content,
+      ...content,
     });
     return true;
   } catch (error) {
