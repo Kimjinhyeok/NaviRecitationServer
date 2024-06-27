@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const {privateKey} = require('../src/secretPrivateKey');
 
 const AuthUsecase = require('../src/usecase/auth');
+const EmailUsecase = require('../src/usecase/email');
 
 router.post('/password', (req, res, next) => {
   try {
@@ -71,6 +72,15 @@ router.post('/reset', async function(req, res, next) {
   } catch (error) {
     res.status(error.code || 400).send({message : error.message || "비밀번호 변경 도중 장애가 발생했습니다."});
     console.debug(error);
+  }
+})
+
+router.post('/sendEmail', async function(req, res, next) {
+  try {
+    const result = await EmailUsecase.sendChangeEmail(req, res, next);
+    res.status(200).send(result);
+  } catch (error) {
+    res.status(error.code || 400).send({message : error.message || "이메일 전송 도중 장애가 발생했습니다."})
   }
 })
 function returnErrorMessage(code, message) {
