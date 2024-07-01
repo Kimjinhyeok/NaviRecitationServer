@@ -1,0 +1,4 @@
+[submodule "public/app"]
+	path = public/app
+	url = ../NaviMemories
+	branch = master
