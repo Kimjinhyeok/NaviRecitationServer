@@ -1,7 +1,7 @@
 require('dotenv').config();
 
 const { sendEmail } = require('../config/stms');
-const {readFile} = require('fs/promises');
+const {readFile} = require('fs').promises;
 const {privateKey} = require('../secretPrivateKey');
 const path = require('path');
 const jwt = require('jsonwebtoken');
